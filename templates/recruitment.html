@@ -1,0 +1,440 @@
+{% extends "base.html" %}
+
+{% block title %}Военная служба - Минобороны России{% endblock %}
+
+{% block extra_css %}
+<style>
+.recruitment-section {
+    padding: 60px 0;
+    background: #f5f5f5;
+}
+
+.recruitment-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+}
+
+.recruitment-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.recruitment-header h1 {
+    font-size: 36px;
+    color: #1a1a1a;
+    margin-bottom: 10px;
+}
+
+.recruitment-header p {
+    color: #666;
+    font-size: 18px;
+}
+
+.recruitment-form {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #333;
+    font-size: 14px;
+}
+
+.form-group label .required {
+    color: red;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #ffd700;
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.recruitment-info {
+    background: #fff9e6;
+    border-left: 4px solid #ffd700;
+    padding: 20px;
+    margin-bottom: 30px;
+    border-radius: 5px;
+}
+
+.recruitment-info h3 {
+    color: #1a1a1a;
+    margin-bottom: 10px;
+}
+
+.recruitment-info ul {
+    margin-left: 20px;
+    color: #666;
+}
+
+.submit-button {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    color: white;
+    padding: 15px 40px;
+    border: none;
+    border-radius: 5px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    width: 100%;
+    transition: transform 0.2s;
+}
+
+.submit-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.message {
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.message.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.message.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .recruitment-container {
+        padding: 20px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="recruitment-section">
+    <div class="recruitment-container">
+        <div class="recruitment-header">
+            <h1>📋 Заявка на военную службу</h1>
+            <p>Заполните форму для постановления на службу</p>
+        </div>
+
+        <div class="recruitment-info">
+            <h3>📌 Требования к кандидатам:</h3>
+            <ul>
+                <li>Возраст от 18 до 27 лет</li>
+                <li>Годность к военной службе</li>
+            </ul>
+        </div>
+
+        <div id="message-container"></div>
+
+        <form class="recruitment-form" id="recruitment-form">
+            <h3 style="margin-bottom: 30px; color: #1a1a1a;">Личные данные</h3>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Фамилия(РП персонажа) <span class="required">*</span></label>
+                    <input type="text" name="last_name" required>
+                </div>
+                <div class="form-group">
+                    <label>Имя(РП персонажа) <span class="required">*</span></label>
+                    <input type="text" name="first_name" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Отчество(РП персонажа)</label>
+                <input type="text" name="middle_name">
+            </div>
+
+            <div class="form-group">
+                <label>Дата рождения РП персонажа<span class="required">*</span></label>
+                <input type="date" name="birth_date" required>
+            </div>
+
+            <div class="form-group">
+                <label>Сколько вам лет (ОСС)?<span class="required">*</span></label>
+                <input type="number" name="r_age" min="13" max="99" required placeholder="Ваш реальный возраст">
+            </div>
+            
+            <div class="form-group">
+                <label>Сколько вы на проекте?<span class="required">*</span></label>
+                <input type="text" name="time_on_project" required placeholder="Например: 2 месяца">
+            </div>
+            
+            <div class="form-group">
+                <label>Был ли у вас опыт в подобных фракциях?<span class="required">*</span></label>
+                <select name="previous_faction_experience" required>
+                    <option value="">Выберите ответ</option>
+                    <option value="Да, был большой опыт">Да, был большой опыт</option>
+                    <option value="Да, был небольшой опыт">Да, был небольшой опыт</option>
+                    <option value="Нет опыта">Нет опыта</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Ваши навыки стрельбы (1-10)<span class="required">*</span></label>
+                <input type="number" name="shooting_skills" min="1" max="10" required placeholder="Оцените от 1 до 10">
+            </div>
+            
+            <div class="form-group">
+                <label>Насколько вы знакомы с УК РФ и Уставом?<span class="required">*</span></label>
+                <textarea name="knowledge_of_law" required placeholder="Опишите ваш уровень знаний"></textarea>
+            </div>
+
+
+            <h3 style="margin: 40px 0 20px 0; color: #1a1a1a;">Документы</h3>
+
+
+            <h3 style="margin: 40px 0 20px 0; color: #1a1a1a;">Контактная информация</h3>
+
+            <div class="form-group">
+                <label>Ник в Discord <span class="required">*</span></label>
+                <input type="text" name="phone" required placeholder="Например: user">
+            </div>
+
+            <div class="form-group">
+                <label>Ник в Roblox</label>
+                <input type="text" name="roblox_nick" placeholder="Ваш ник в игре">
+            </div>
+
+            <h3 style="margin: 40px 0 20px 0; color: #1a1a1a;">Дополнительная информация</h3>
+
+            <div class="form-group">
+                <label>Сколько проживаете в облости</label>
+                <input type="text" name="live_in_area" placeholder="Сколько проживаете в облости">
+            </div>
+            <div class="form-group">
+                <label>Готовы отдать долг родине?</label>
+                <select name="ready_to_serve_the_country">
+                    <option value="">Выберите ответ</option>
+                    <option value="Да, готов">Да, готов</option>
+                    <option value="Нет, не готов">Нет, не готов</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Предыдущая служба (если имеется)</label>
+                <textarea name="previous_service" placeholder="Звание, подразделение, период службы"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Желаемое подразделение</label>
+                <select name="department_preference">
+                    <option value="">Выберите подразделение</option>
+                    <option value="Сухопутные войска">Сухопутные войска</option>
+                    <option value="Воздушно-космические силы">Воздушно-космические силы</option>
+                    <option value="Военно-морской флот">Военно-морской флот</option>
+                    <option value="Воздушно-десантные войска">Воздушно-десантные войска</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Какую службу выберете?<span class="required">*</span></label>
+                <select name="service_type" required>
+                    <option value="">Выберите ответ</option>
+                    <option value="conscription">Срочная служба (военный билет)</option>
+                    <option value="contract">Контракт (карьерный рост)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Дополнительная информация</label>
+                <textarea name="additional_info"></textarea>
+            </div>
+
+            <h3 style="margin: 40px 0 20px 0; color: #1a1a1a;">Учетные данные</h3>
+
+            <div class="form-group">
+                <label>Желаемый логин <span class="required">*</span></label>
+                <input type="text" name="username" required minlength="3" placeholder="Придумайте логин">
+            </div>
+            <div class="form-group">
+                <label>Желаемый пароль <span class="required">*</span></label>
+                <input type="password" name="password" required minlength="6" placeholder="Придумайте пароль (не менее 6 символов)">
+            </div>
+
+            <button type="submit" class="submit-button">📤 Отправить заявку</button>
+        </form>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('recruitment-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const data = {};
+    formData.forEach((value, key) => {
+        data[key] = value;
+    });
+    
+    const submitButton = this.querySelector('.submit-button');
+    const originalText = submitButton.textContent;
+    submitButton.textContent = '⏳ Отправка...';
+    submitButton.disabled = true;
+    
+    try {
+        const response = await fetch('/recruitment/submit', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        const messageContainer = document.getElementById('message-container');
+        if (result.success) {
+            if (result.show_credentials && result.username && result.password) {
+                // Показать модальное окно с учетными данными
+                showCredentialsModal(result.username, result.password);
+            } else {
+                messageContainer.innerHTML = `<div class="message success">✅ ${result.message}</div>`;
+            }
+            this.reset();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+            messageContainer.innerHTML = `<div class="message error">❌ ${result.message}</div>`;
+        }
+    } catch (error) {
+        const messageContainer = document.getElementById('message-container');
+        messageContainer.innerHTML = `<div class="message error">❌ Ошибка при отправке: ${error.message}</div>`;
+    } finally {
+        submitButton.textContent = originalText;
+        submitButton.disabled = false;
+    }
+});
+
+function showCredentialsModal(username, password) {
+    const modal = document.createElement('div');
+    modal.className = 'credentials-modal';
+    modal.innerHTML = `
+        <div class="credentials-content">
+            <h2>🎉 Регистрация успешна!</h2>
+            <p style="color: #666; margin-bottom: 20px;">Ваши учетные данные для входа в систему:</p>
+            <div class="credentials-box">
+                <div class="credential-item">
+                    <label>Логин:</label>
+                    <code>${username}</code>
+                </div>
+                <div class="credential-item">
+                    <label>Пароль:</label>
+                    <code>${password}</code>
+                </div>
+            </div>
+            <p style="color: #ff6b6b; margin-top: 20px; font-weight: bold;">⚠️ Сохраните эти данные в безопасном месте!</p>
+            <button onclick="this.closest('.credentials-modal').remove()" class="submit-button" style="margin-top: 20px;">Закрыть</button>
+        </div>
+    `;
+    
+    // Добавляем стили для модального окна
+    if (!document.getElementById('credentials-styles')) {
+        const style = document.createElement('style');
+        style.id = 'credentials-styles';
+        style.textContent = `
+            .credentials-modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.7);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 9999;
+            }
+            .credentials-content {
+                background: white;
+                padding: 40px;
+                border-radius: 15px;
+                max-width: 500px;
+                box-shadow: 0 10px 50px rgba(0, 0, 0, 0.3);
+                text-align: center;
+            }
+            .credentials-content h2 {
+                color: #1a1a1a;
+                margin-bottom: 20px;
+            }
+            .credentials-box {
+                background: #f9f9f9;
+                padding: 20px;
+                border-radius: 10px;
+                margin: 20px 0;
+                border: 2px solid #ffd700;
+            }
+            .credential-item {
+                margin: 15px 0;
+                text-align: left;
+            }
+            .credential-item label {
+                display: block;
+                font-weight: bold;
+                color: #333;
+                margin-bottom: 5px;
+            }
+            .credential-item code {
+                display: block;
+                background: white;
+                padding: 10px;
+                border-radius: 5px;
+                font-size: 16px;
+                font-family: 'Courier New', monospace;
+                color: #1a1a1a;
+                border: 1px solid #ddd;
+                word-break: break-all;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    document.body.appendChild(modal);
+}
+</script>
+{% endblock %}
+

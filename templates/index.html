@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero-slider">
+    <div class="hero-slide active">
+        <div class="container">
+            <h2>Вооруженные Силы Российской Федерации</h2>
+            <p>На страже национальной безопасности</p>
+            <a href="{{ url_for('recruitment') }}" class="cta-button">Поступить на службу</a>
+        </div>
+    </div>
+    <div class="hero-slide">
+        <div class="container">
+            <h2>Армия России</h2>
+            <p>Высокое качество образования и воспитания</p>
+            <a href="{{ url_for('recruitment') }}" class="cta-button">Узнать больше</a>
+        </div>
+    </div>
+</section>
+
+<section class="news-section" id="news">
+    <div class="container">
+        <h2 class="section-title">НОВОСТИ</h2>
+        <div class="news-grid" id="news-grid">
+            <!-- News will be loaded via API -->
+            <div style="text-align: center; grid-column: 1/-1;">
+                <p>Загрузка новостей...</p>
+            </div>
+        </div>
+        <div class="all-news-button">
+            <a href="#news">Все новости</a>
+        </div>
+    </div>
+</section>
+
+<section class="structure-section" id="structure">
+    <div class="container">
+        <h2 class="section-title">СТРУКТУРА ВООРУЖЕННЫХ СИЛ</h2>
+        <div class="structure-grid">
+            <div class="structure-card">
+                <div class="structure-icon">✈</div>
+                <h3>Воздушно-космические силы</h3>
+                <p>Обеспечение воздушно-космической безопасности</p>
+            </div>
+            <div class="structure-card">
+                <div class="structure-icon">🚢</div>
+                <h3>Военно-морской флот</h3>
+                <p>Защита морских границ и стратегических объектов</p>
+            </div>
+            <div class="structure-card">
+                <div class="structure-icon">🔰</div>
+                <h3>Сухопутные войска</h3>
+                <p>Основной компонент Вооруженных Сил России</p>
+            </div>
+            <div class="structure-card">
+                <div class="structure-icon">🚁</div>
+                <h3>Воздушно-десантные войска</h3>
+                <p>Мобильные подразделения быстрого реагирования</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="stats-section">
+    <div class="container">
+        <h2 class="section-title">В ЦИФРАХ</h2>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-number">1000000+</div>
+                <div class="stat-label">Военнослужащих</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">15000+</div>
+                <div class="stat-label">Единиц техники</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">85</div>
+                <div class="stat-label">Лет истории</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">99%</div>
+                <div class="stat-label">Боеготовности</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div id="contacts"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Load news from API
+fetch('/api/news')
+    .then(response => response.json())
+    .then(data => {
+        const newsGrid = document.getElementById('news-grid');
+        newsGrid.innerHTML = data.map(item => `
+            <article class="news-card">
+                <div class="news-date">${item.date}</div>
+                <h3>${item.title}</h3>
+                <p>${item.content}</p>
+                <a href="#" class="read-more">Читать далее →</a>
+            </article>
+        `).join('');
+    })
+    .catch(error => console.error('Error loading news:', error));
+</script>
+{% endblock %}
+

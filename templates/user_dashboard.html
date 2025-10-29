@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Личный кабинет{% endblock %}
+
+{% block extra_css %}
+<style>
+.panel-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+.card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.06); }
+.card h2 { margin: 0 0 12px 0; }
+.list { display: grid; gap: 10px; }
+.empty { color: #666; background: #fafafa; border: 1px dashed #ddd; padding: 16px; border-radius: 8px; }
+.tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; background:#eee; }
+@media (max-width: 900px) { .panel-grid { grid-template-columns: 1fr; } }
+.toolbar { display:flex; gap:8px; align-items:center; margin-bottom: 10px; }
+.toolbar input[type="search"]{ flex:1; padding:8px 10px; border:1px solid #ddd; border-radius:8px; }
+.toolbar button { padding:8px 12px; border:none; border-radius:8px; background:#1a1a1a; color:#fff; cursor:pointer; }
+.toolbar button:hover { background:#333; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="admin-section" style="padding: 40px 0;">
+  <div class="admin-container">
+    <h1 style="margin-bottom: 16px;">👤 Личный кабинет — {{ (current_user.recruitment.last_name ~ ' ' ~ current_user.recruitment.first_name ~ (current_user.recruitment.middle_name and ' ' ~ current_user.recruitment.middle_name or '')) if current_user and current_user.recruitment else (current_user.username if current_user else '') }}{% if current_user and current_user.rank %} — {{ current_user.rank }}{% endif %}</h1>
+    <p style="margin-bottom: 20px; color:#666;">Ваши боевые задачи, поручения, уведомления и распорядок дня.</p>
+    <div class="panel-grid">
+      <div class="card">
+        <h2>🎯 Боевые задачи</h2>
+        <div class="toolbar">
+          <input type="search" id="tasks-search" placeholder="Поиск задач...">
+          <button id="tasks-refresh">Обновить</button>
+        </div>
+        <div id="tasks" class="list"></div>
+      </div>
+      <div class="card">
+        <h2>📌 Поручения</h2>
+        <div class="toolbar">
+          <input type="search" id="assignments-search" placeholder="Поиск поручений...">
+          <button id="assignments-refresh">Обновить</button>
+        </div>
+        <div id="assignments" class="list"></div>
+      </div>
+      <div class="card">
+        <h2>🔔 Уведомления</h2>
+        <div class="toolbar">
+          <button id="notifications-refresh">Обновить</button>
+        </div>
+        <div id="notifications" class="list"></div>
+      </div>
+      <div class="card">
+        <h2>🗓️ Распорядок дня</h2>
+        <div class="toolbar">
+          <button id="schedule-refresh">Обновить</button>
+        </div>
+        <div id="schedule" class="list"></div>
+      </div>
+    </div>
+    <div style="margin-top:20px;">
+        <a class="view-details" href="/logout">Выйти</a>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function fetchJson(url){ const r=await fetch(url); return await r.json(); }
+function el(tag, cls, html){ const d=document.createElement(tag); if(cls) d.className=cls; if(html!==undefined) d.innerHTML=html; return d; }
+
+function renderList(containerId, items, renderItem, emptyText){
+  const box = document.getElementById(containerId);
+  box.innerHTML = '';
+  if(!items || items.length===0){ box.appendChild(el('div','empty', emptyText)); return; }
+  items.forEach(i=> box.appendChild(renderItem(i)) );
+}
+
+function taskItem(t){
+  const div = el('div');
+  div.innerHTML = `<strong>${t.title}</strong> <span class="tag">${t.status}</span> <span class="tag">${t.priority}</span><br><span style="color:#666;">${t.description||''}</span>${t.due_date?`<div style='color:#888;'>Срок: ${t.due_date}</div>`:''}`;
+  return div;
+}
+function assignmentItem(a){
+  const div = el('div');
+  div.innerHTML = `<strong>${a.title}</strong> ${a.issued_by?`<span class='tag'>${a.issued_by}</span>`:''}<br><span style="color:#666;">${a.description||''}</span><div style='color:#888;'>${a.created_at}</div>`;
+  return div;
+}
+function notificationItem(n){
+  const div = el('div');
+  div.innerHTML = `${n.content} <span class="tag">${n.created_at}</span>`;
+  return div;
+}
+function scheduleItem(s){
+  const div = el('div');
+  div.innerHTML = `<strong>${s.day}</strong><br>Подъём: ${s.wake_up||'-'} • Тренировка: ${s.training||'-'}<br>Наряд: ${s.duty||'-'} • Отдых: ${s.rest||'-'} • Отбой: ${s.lights_out||'-'}`;
+  return div;
+}
+
+async function load(){
+  const [tasks, assignments, notifications, schedule] = await Promise.all([
+    fetchJson('/api/user/tasks'),
+    fetchJson('/api/user/assignments'),
+    fetchJson('/api/user/notifications'),
+    fetchJson('/api/user/schedule')
+  ]);
+  // Apply current filters if any
+  const tQuery = (document.getElementById('tasks-search')?.value || '').toLowerCase();
+  const aQuery = (document.getElementById('assignments-search')?.value || '').toLowerCase();
+  const tasksFiltered = tQuery ? tasks.filter(t => (t.title||'').toLowerCase().includes(tQuery) || (t.description||'').toLowerCase().includes(tQuery)) : tasks;
+  const assignmentsFiltered = aQuery ? assignments.filter(a => (a.title||'').toLowerCase().includes(aQuery) || (a.description||'').toLowerCase().includes(aQuery)) : assignments;
+
+  renderList('tasks', tasksFiltered, taskItem, 'Нет боевых задач');
+  renderList('assignments', assignmentsFiltered, assignmentItem, 'Нет поручений');
+  renderList('notifications', notifications, notificationItem, 'Нет уведомлений');
+  renderList('schedule', schedule, scheduleItem, 'Распорядок дня не задан');
+}
+
+document.addEventListener('DOMContentLoaded', load);
+
+// Wire up search & refresh controls and auto-refresh
+document.addEventListener('DOMContentLoaded', () => {
+  const bindRefresh = (btnId, fn) => {
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    btn.addEventListener('click', async () => {
+      btn.disabled = true; const orig = btn.textContent; btn.textContent = '⏳';
+      try { await fn(); } finally { btn.disabled = false; btn.textContent = orig; }
+    });
+  };
+
+  const reload = () => load();
+  bindRefresh('tasks-refresh', reload);
+  bindRefresh('assignments-refresh', reload);
+  bindRefresh('notifications-refresh', reload);
+  bindRefresh('schedule-refresh', reload);
+
+  const tSearch = document.getElementById('tasks-search');
+  const aSearch = document.getElementById('assignments-search');
+  if (tSearch) tSearch.addEventListener('input', () => load());
+  if (aSearch) aSearch.addEventListener('input', () => load());
+
+  // Auto refresh every 60 seconds
+  setInterval(reload, 60000);
+});
+</script>
+{% endblock %}
+
+

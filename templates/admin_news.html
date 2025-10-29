@@ -1,0 +1,451 @@
+{% extends "base.html" %}
+
+{% block title %}Управление новостями - Админ-панель{% endblock %}
+
+{% block extra_css %}
+<style>
+.admin-section {
+    padding: 60px 0;
+    min-height: 70vh;
+}
+
+.admin-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+}
+
+.page-header h1 {
+    font-size: 36px;
+    color: #1a1a1a;
+}
+
+.add-news-btn {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    color: white;
+    padding: 12px 30px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.add-news-btn:hover {
+    transform: translateY(-2px);
+}
+
+.news-table {
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.news-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.news-table th,
+.news-table td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.news-table th {
+    background: #1a1a1a;
+    color: #ffd700;
+    font-weight: bold;
+}
+
+.news-table tr:hover {
+    background: #f9f9f9;
+}
+
+.news-title {
+    font-weight: bold;
+    color: #333;
+    max-width: 400px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.news-content {
+    color: #666;
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.btn {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-right: 5px;
+    transition: background 0.3s;
+}
+
+.btn-edit {
+    background: #ffd700;
+    color: #000;
+}
+
+.btn-edit:hover {
+    background: #ffed4e;
+}
+
+.btn-delete {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-delete:hover {
+    background: #c82333;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    overflow: auto;
+}
+
+.modal-content {
+    background: white;
+    margin: 5% auto;
+    padding: 40px;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #eee;
+}
+
+.close {
+    color: #aaa;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover {
+    color: #000;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #333;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 150px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 30px;
+}
+
+.form-actions button {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.btn-submit {
+    background: #28a745;
+    color: white;
+}
+
+.btn-submit:hover {
+    background: #218838;
+}
+
+.btn-cancel {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-cancel:hover {
+    background: #5a6268;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="admin-section">
+    <div class="admin-container">
+        <div class="page-header">
+            <h1>📰 Управление новостями</h1>
+            <button class="add-news-btn" onclick="openAddNewsModal()">➕ Добавить новость</button>
+        </div>
+
+        <div class="news-table">
+            <table id="news-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Заголовок</th>
+                        <th>Содержание</th>
+                        <th>Категория</th>
+                        <th>Автор</th>
+                        <th>Дата</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px;">
+                            Загрузка новостей...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<!-- Add/Edit News Modal -->
+<div id="news-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modal-title">Добавить новость</h2>
+            <span class="close" onclick="closeModal()">&times;</span>
+        </div>
+        <form id="news-form" onsubmit="saveNews(event)">
+            <div class="form-group">
+                <label for="news-title">Заголовок *</label>
+                <input type="text" id="news-title" name="title" required>
+            </div>
+
+            <div class="form-group">
+                <label for="news-content">Содержание *</label>
+                <textarea id="news-content" name="content" required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="news-category">Категория</label>
+                <select id="news-category" name="category">
+                    <option value="">Выберите категорию</option>
+                    <option value="Новости">Новости</option>
+                    <option value="Учения">Учения</option>
+                    <option value="События">События</option>
+                    <option value="Техника">Техника</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="news-author">Автор</label>
+                <input type="text" id="news-author" name="author" value="Пресс-служба Минобороны">
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-submit">💾 Сохранить</button>
+                <button type="button" class="btn-cancel" onclick="closeModal()">Отмена</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div style="text-align: center; margin-top: 30px;">
+    <a href="{{ url_for('admin_dashboard') }}" style="color: #666; text-decoration: none;">← Вернуться в Dashboard</a>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let editingNewsId = null;
+
+async function loadNews() {
+    try {
+        const response = await fetch('/api/news');
+        const news = await response.json();
+        
+        const tbody = document.querySelector('#news-table tbody');
+        
+        if (news.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 40px;">
+                        Нет новостей
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        tbody.innerHTML = news.map(item => `
+            <tr>
+                <td>#${item.id}</td>
+                <td class="news-title">${item.title}</td>
+                <td class="news-content">${item.content}</td>
+                <td>${item.category || '-'}</td>
+                <td>${item.author || '-'}</td>
+                <td>${item.date}</td>
+                <td>
+                    <button class="btn btn-edit" onclick="editNews(${item.id})">✏️ Редактировать</button>
+                    <button class="btn btn-delete" onclick="deleteNews(${item.id})">🗑️ Удалить</button>
+                </td>
+            </tr>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading news:', error);
+    }
+}
+
+async function openAddNewsModal() {
+    editingNewsId = null;
+    document.getElementById('modal-title').textContent = 'Добавить новость';
+    document.getElementById('news-form').reset();
+    document.getElementById('news-modal').style.display = 'block';
+}
+
+async function editNews(id) {
+    try {
+        const response = await fetch(`/api/news/${id}`);
+        const news = await response.json();
+        
+        document.getElementById('modal-title').textContent = 'Редактировать новость';
+        document.getElementById('news-title').value = news.title;
+        document.getElementById('news-content').value = news.content;
+        document.getElementById('news-category').value = news.category || '';
+        document.getElementById('news-author').value = news.author || '';
+        
+        editingNewsId = id;
+        document.getElementById('news-modal').style.display = 'block';
+    } catch (error) {
+        console.error('Error loading news:', error);
+    }
+}
+
+async function saveNews(event) {
+    event.preventDefault();
+    
+    const formData = new FormData(event.target);
+    const data = {
+        title: formData.get('title'),
+        content: formData.get('content'),
+        category: formData.get('category'),
+        author: formData.get('author')
+    };
+    
+    try {
+        let url = '/api/news';
+        let method = 'POST';
+        
+        if (editingNewsId) {
+            url = `/api/news/${editingNewsId}`;
+            method = 'PUT';
+        }
+        
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert(result.message);
+            closeModal();
+            loadNews();
+        }
+    } catch (error) {
+        console.error('Error saving news:', error);
+        alert('Ошибка при сохранении новости');
+    }
+}
+
+async function deleteNews(id) {
+    if (!confirm('Вы уверены, что хотите удалить эту новость?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/news/${id}`, {
+            method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert(result.message);
+            loadNews();
+        }
+    } catch (error) {
+        console.error('Error deleting news:', error);
+        alert('Ошибка при удалении новости');
+    }
+}
+
+function closeModal() {
+    document.getElementById('news-modal').style.display = 'none';
+    editingNewsId = null;
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById('news-modal');
+    if (event.target === modal) {
+        closeModal();
+    }
+}
+
+// Load news on page load
+document.addEventListener('DOMContentLoaded', loadNews);
+</script>
+{% endblock %}
+

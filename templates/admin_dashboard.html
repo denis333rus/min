@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+
+{% block title %}Админ-панель - Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+.admin-section {
+    padding: 60px 0;
+    min-height: 70vh;
+}
+
+.admin-dashboard {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.dashboard-header {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.dashboard-header h1 {
+    font-size: 36px;
+    color: #1a1a1a;
+    margin-bottom: 10px;
+}
+
+.dashboard-header p {
+    color: #666;
+    font-size: 18px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 30px;
+    margin-bottom: 50px;
+}
+
+.stat-card {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: transform 0.3s;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-icon {
+    font-size: 48px;
+    margin-bottom: 15px;
+}
+
+.stat-number {
+    font-size: 36px;
+    font-weight: bold;
+    color: #ffd700;
+    margin-bottom: 10px;
+}
+
+.stat-label {
+    color: #666;
+    font-size: 16px;
+}
+
+.quick-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    margin-bottom: 50px;
+}
+
+.action-card {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    padding: 40px;
+    border-radius: 10px;
+    color: white;
+    text-align: center;
+    transition: transform 0.3s;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.action-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.action-icon {
+    font-size: 64px;
+    margin-bottom: 20px;
+}
+
+.action-card h2 {
+    color: #ffd700;
+    margin-bottom: 10px;
+}
+
+.action-card p {
+    color: #ccc;
+}
+
+.logout-button {
+    text-align: center;
+    margin-top: 40px;
+}
+
+.logout-button a {
+    display: inline-block;
+    padding: 12px 30px;
+    background: #dc3545;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+    transition: background 0.3s;
+}
+
+.logout-button a:hover {
+    background: #c82333;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="admin-section">
+    <div class="admin-dashboard">
+        <div class="dashboard-header">
+            <h1>👨‍💼 Административная панель</h1>
+            <p>Добро пожаловать, администратор!</p>
+        </div>
+
+        <div class="stats-grid" id="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">📋</div>
+                <div class="stat-number" id="total-applications">-</div>
+                <div class="stat-label">Всего заявок</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⏳</div>
+                <div class="stat-number" id="pending-applications">-</div>
+                <div class="stat-label">На рассмотрении</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">✅</div>
+                <div class="stat-number" id="approved-applications">-</div>
+                <div class="stat-label">Одобрено</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📰</div>
+                <div class="stat-number" id="total-news">-</div>
+                <div class="stat-label">Новостей</div>
+            </div>
+        </div>
+
+        <div class="quick-actions">
+            <a href="{{ url_for('admin_applications') }}" class="action-card">
+                <div class="action-icon">📋</div>
+                <h2>Управление заявками</h2>
+                <p>Просмотр и изменение статусов заявок на военную службу</p>
+            </a>
+            
+            <a href="{{ url_for('admin_news') }}" class="action-card">
+                <div class="action-icon">📰</div>
+                <h2>Управление новостями</h2>
+                <p>Создание, редактирование и удаление новостей</p>
+            </a>
+            <a href="{{ url_for('admin_users') }}" class="action-card">
+                <div class="action-icon">💂‍♂️</div>
+                <h2>Управление пользователями</h2>
+                <p>Создание, редактирование и удаление пользователей</p>
+            </a>
+        </div>
+
+        <div class="logout-button">
+            <a href="{{ url_for('admin_logout') }}">🚪 Выйти из админ-панели</a>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Load statistics
+async function loadStats() {
+    try {
+        const [applications, news] = await Promise.all([
+            fetch('/api/applications').then(r => r.json()),
+            fetch('/api/news').then(r => r.json())
+        ]);
+
+        const totalApps = applications.length;
+        const pending = applications.filter(a => a.status.includes('рассмотрении')).length;
+        const approved = applications.filter(a => a.status.includes('одобрена')).length;
+
+        document.getElementById('total-applications').textContent = totalApps;
+        document.getElementById('pending-applications').textContent = pending;
+        document.getElementById('approved-applications').textContent = approved;
+        document.getElementById('total-news').textContent = news.length;
+    } catch (error) {
+        console.error('Error loading stats:', error);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', loadStats);
+</script>
+{% endblock %}
+

@@ -1,0 +1,271 @@
+{% extends "base.html" %}
+
+{% block title %}Управление личным составом{% endblock %}
+
+{% block extra_css %}
+<style>
+.admin-section { padding: 40px 0; }
+.grid { display:grid; grid-template-columns: 1fr 1fr; gap:20px; }
+@media (max-width: 1000px){ .grid { grid-template-columns: 1fr; } }
+.card { background:#fff; border-radius:12px; padding:20px; box-shadow:0 8px 24px rgba(0,0,0,0.06); }
+.card h2 { margin:0 0 12px 0; }
+.row { display:flex; gap:8px; margin-bottom:8px; }
+.row input, .row select { flex:1; padding:10px; border:1px solid #ddd; border-radius:8px; }
+.row button { padding:10px 14px; border:none; border-radius:8px; background:#1a1a1a; color:#fff; cursor:pointer; }
+.row button:hover { background:#333; }
+.list { margin-top:10px; }
+.item { padding:8px 10px; border:1px solid #eee; border-radius:8px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center; }
+.muted { color:#777; }
+.users-card .row { align-items: center; }
+.rank { min-width: 160px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="admin-section">
+  <div class="admin-container">
+    <h1>🛡️ Управление личным составом</h1>
+    <div class="grid">
+      <div class="card users-card">
+        <h2>Все пользователи</h2>
+        <div class="row">
+          <input id="users-search" placeholder="Поиск по логину...">
+          <button onclick="loadUsers()">Обновить</button>
+        </div>
+        <div id="users" class="list"></div>
+      </div>
+      <div class="card">
+        <h2>Группы</h2>
+        <div class="row">
+          <input id="group-name" placeholder="Название группы">
+          <input id="group-desc" placeholder="Описание (необязательно)">
+          <button onclick="createGroup()">Создать</button>
+        </div>
+        <div id="groups" class="list"></div>
+      </div>
+
+      <div class="card">
+        <h2>Состав группы</h2>
+        <div class="row">
+          <select id="group-select"></select>
+          <input id="member-username" placeholder="Логин пользователя">
+          <button onclick="addMember()">Добавить</button>
+        </div>
+        <div id="members" class="list"></div>
+      </div>
+
+      <div class="card">
+        <h2>Выдать боевую задачу</h2>
+        <div class="row">
+          <input id="task-title" placeholder="Заголовок">
+          <input id="task-desc" placeholder="Описание">
+        </div>
+        <div class="row">
+          <input id="task-due" placeholder="Срок (например: 2025-11-01)">
+          <select id="task-priority">
+            <option value="normal">Обычный</option>
+            <option value="high">Высокий</option>
+            <option value="low">Низкий</option>
+          </select>
+        </div>
+        <div class="row">
+          <input id="task-username" placeholder="Логин пользователя (или пусто)">
+          <select id="task-group"></select>
+          <button onclick="sendTask()">Выдать</button>
+        </div>
+        <div class="muted">Заполните либо логин пользователя, либо выберите группу.</div>
+      </div>
+
+      <div class="card">
+        <h2>Выдать поручение</h2>
+        <div class="row">
+          <input id="assign-title" placeholder="Заголовок">
+          <input id="assign-desc" placeholder="Описание">
+        </div>
+        <div class="row">
+          <input id="assign-issued" placeholder="Кем выдано (необязательно)">
+        </div>
+        <div class="row">
+          <input id="assign-username" placeholder="Логин пользователя (или пусто)">
+          <select id="assign-group"></select>
+          <button onclick="sendAssignment()">Выдать</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Распорядок дня</h2>
+        <div class="row">
+          <input id="sch-day" placeholder="День (например: Monday)">
+          <input id="sch-wake" placeholder="Подъём">
+          <input id="sch-train" placeholder="Тренировка">
+        </div>
+        <div class="row">
+          <input id="sch-duty" placeholder="Наряд">
+          <input id="sch-rest" placeholder="Отдых">
+          <input id="sch-lights" placeholder="Отбой">
+        </div>
+        <div class="row">
+          <input id="sch-username" placeholder="Логин пользователя (или пусто)">
+          <select id="sch-group"></select>
+          <button onclick="sendSchedule()">Назначить</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function j(url, method='GET', body){
+  const r = await fetch(url, { method, headers: { 'Content-Type':'application/json' }, body: body?JSON.stringify(body):undefined });
+  return await r.json();
+}
+
+const RANKS = ['Рядовой','Ефрейтор','Младший сержант','Сержант','Старший сержант','Прапорщик','Младший лейтенант','Лейтенант','Старший лейтенант','Капитан','Майор','Подполковник','Полковник','Генерал'];
+
+async function loadUsers(){
+  const data = await j('/api/admin/users');
+  const wrap = document.getElementById('users');
+  const q = (document.getElementById('users-search').value || '').toLowerCase();
+  wrap.innerHTML = '';
+  data
+    .filter(u => !q || (u.username||'').toLowerCase().includes(q))
+    .forEach(u => {
+      const row = document.createElement('div'); row.className='item';
+      const left = document.createElement('div'); left.innerHTML = `<strong>${u.username}</strong><div class='muted'>ID: ${u.id}</div>`;
+      const right = document.createElement('div');
+      const select = document.createElement('select'); select.className='rank';
+      RANKS.forEach(r => select.add(new Option(r, r, false, (u.rank||'')===r)));
+      const save = document.createElement('button'); save.textContent='Сохранить'; save.onclick = async ()=>{
+        const res = await j(`/api/admin/users/${u.id}`, 'PUT', { rank: select.value });
+        if(!res.success) return alert(res.message||'Ошибка');
+        alert('Звание обновлено');
+      };
+      right.append(select, save);
+      row.append(left, right);
+      wrap.appendChild(row);
+    });
+}
+
+async function loadGroups(){
+  const data = await j('/api/admin/groups');
+  const wrap = document.getElementById('groups');
+  wrap.innerHTML = '';
+  const sel = document.getElementById('group-select');
+  const gSel = [document.getElementById('task-group'), document.getElementById('assign-group'), document.getElementById('sch-group')];
+  sel.innerHTML = ''; gSel.forEach(s=> s.innerHTML='');
+  data.forEach(g => {
+    const row = document.createElement('div'); row.className='item';
+    row.innerHTML = `<div><strong>${g.name}</strong><div class='muted'>${g.description||''}</div></div>`;
+    const btns = document.createElement('div');
+    const edit = document.createElement('button'); edit.textContent='✏️'; edit.onclick=async()=>{
+      const name = prompt('Новое имя', g.name); if(!name) return;
+      const description = prompt('Описание', g.description||'');
+      await j(`/api/admin/groups/${g.id}`, 'PUT', { name, description });
+      loadGroups();
+    };
+    const del = document.createElement('button'); del.textContent='🗑️'; del.onclick=async()=>{ if(!confirm('Удалить группу?')) return; await j(`/api/admin/groups/${g.id}`, 'DELETE'); loadGroups(); };
+    btns.append(edit, del); row.appendChild(btns); wrap.appendChild(row);
+    const opt = new Option(g.name, g.id); sel.add(opt.cloneNode(true)); gSel.forEach(s=> s.add(new Option(g.name, g.id)));
+  });
+  loadMembers();
+}
+
+async function loadMembers(){
+  const gid = document.getElementById('group-select').value; if(!gid) { document.getElementById('members').innerHTML=''; return; }
+  const data = await j(`/api/admin/groups/${gid}/members`);
+  const wrap = document.getElementById('members'); wrap.innerHTML='';
+  data.forEach(m=>{
+    const row = document.createElement('div'); row.className='item';
+    row.innerHTML = `<div>${m.username}</div>`;
+    const del = document.createElement('button'); del.textContent='🗑️'; del.onclick=async()=>{ await j(`/api/admin/groups/${gid}/members/${m.user_id}`, 'DELETE'); loadMembers(); };
+    row.appendChild(del); wrap.appendChild(row);
+  });
+}
+
+async function createGroup(){
+  const name = document.getElementById('group-name').value.trim();
+  const description = document.getElementById('group-desc').value.trim();
+  if(!name) return alert('Укажите название');
+  const res = await j('/api/admin/groups', 'POST', { name, description });
+  if(!res.success) return alert(res.message||'Ошибка');
+  document.getElementById('group-name').value=''; document.getElementById('group-desc').value='';
+  loadGroups();
+}
+
+async function addMember(){
+  const gid = document.getElementById('group-select').value; if(!gid) return alert('Выберите группу');
+  const username = document.getElementById('member-username').value.trim(); if(!username) return alert('Введите логин');
+  const res = await j(`/api/admin/groups/${gid}/members`, 'POST', { username });
+  if(!res.success) return alert(res.message||'Ошибка');
+  document.getElementById('member-username').value='';
+  loadMembers();
+}
+
+function targetIds(userInputId, groupSelectId){
+  const username = document.getElementById(userInputId).value.trim();
+  const gid = document.getElementById(groupSelectId).value;
+  return { username, gid };
+}
+
+async function resolveUserId(username){
+  if(!username) return null;
+  const users = await j('/api/admin/users');
+  const u = users.find(x=> x.username === username);
+  return u ? u.id : null;
+}
+
+async function sendTask(){
+  const { username, gid } = targetIds('task-username', 'task-group');
+  const title = document.getElementById('task-title').value.trim();
+  if(!title) return alert('Укажите заголовок');
+  const body = {
+    title,
+    description: document.getElementById('task-desc').value.trim(),
+    due_date: document.getElementById('task-due').value.trim(),
+    priority: document.getElementById('task-priority').value
+  };
+  if (username) body.user_id = await resolveUserId(username); else if (gid) body.group_id = Number(gid);
+  const res = await j('/api/admin/actions/task', 'POST', body);
+  if(!res.success) return alert(res.message||'Ошибка');
+  alert(`Создано для: ${res.created_for}`);
+}
+
+async function sendAssignment(){
+  const { username, gid } = targetIds('assign-username', 'assign-group');
+  const title = document.getElementById('assign-title').value.trim(); if(!title) return alert('Укажите заголовок');
+  const body = { title, description: document.getElementById('assign-desc').value.trim(), issued_by: document.getElementById('assign-issued').value.trim() };
+  if (username) body.user_id = await resolveUserId(username); else if (gid) body.group_id = Number(gid);
+  const res = await j('/api/admin/actions/assignment', 'POST', body);
+  if(!res.success) return alert(res.message||'Ошибка');
+  alert(`Создано для: ${res.created_for}`);
+}
+
+async function sendSchedule(){
+  const { username, gid } = targetIds('sch-username', 'sch-group');
+  const day = document.getElementById('sch-day').value.trim(); if(!day) return alert('Укажите день');
+  const body = {
+    day,
+    wake_up: document.getElementById('sch-wake').value.trim(),
+    training: document.getElementById('sch-train').value.trim(),
+    duty: document.getElementById('sch-duty').value.trim(),
+    rest: document.getElementById('sch-rest').value.trim(),
+    lights_out: document.getElementById('sch-lights').value.trim()
+  };
+  if (username) body.user_id = await resolveUserId(username); else if (gid) body.group_id = Number(gid);
+  const res = await j('/api/admin/actions/schedule', 'POST', body);
+  if(!res.success) return alert(res.message||'Ошибка');
+  alert(`Создано для: ${res.created_for}`);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadGroups();
+  document.getElementById('group-select').addEventListener('change', loadMembers);
+  loadUsers();
+  const us = document.getElementById('users-search'); if (us) us.addEventListener('input', loadUsers);
+});
+</script>
+{% endblock %}
+
+

@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Вход администратора' if role=='admin' else 'Вход пользователя' }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.login-card { background:#fff; padding: 32px; border-radius: 14px; box-shadow: 0 10px 40px rgba(0,0,0,0.08); max-width: 440px; margin: 0 auto; }
+.login-header { text-align:center; margin-bottom: 20px; }
+.login-header h1 { margin:0 0 8px 0; }
+.muted { color:#666; }
+.field-with-icon { position: relative; }
+.toggle-password { position:absolute; right:10px; top:36px; background:transparent; border:none; cursor:pointer; color:#666; }
+.toggle-password:hover { color:#000; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="admin-section" style="padding: 60px 0; min-height: 60vh;">
+  <div class="admin-container" style="max-width: 640px; margin: 0 auto;">
+    <div class="login-card">
+      <div class="login-header">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Логотип" style="width:72px;height:72px;margin-bottom:12px;"/>
+        <h1>{{ 'Админ-панель' if role=='admin' else 'Личный кабинет' }}</h1>
+        <div class="muted">{{ 'Войдите для управления сайтом' if role=='admin' else 'Войдите в личный кабинет' }}</div>
+      </div>
+
+      {% if error %}
+      <div class="message error" style="margin-bottom: 16px;">{{ error }}</div>
+      {% endif %}
+
+      <form method="POST" id="login-form" novalidate>
+        <div class="form-group">
+          <label>Логин</label>
+          <input type="text" name="username" required autofocus minlength="3" autocomplete="username">
+        </div>
+        <div class="form-group field-with-icon">
+          <label>Пароль</label>
+          <input type="password" name="password" required minlength="6" autocomplete="current-password">
+          <button type="button" class="toggle-password" aria-label="Показать пароль">👁️</button>
+        </div>
+        <button type="submit" class="submit-button" id="login-submit">🔐 Войти</button>
+      </form>
+    </div>
+
+    <div style="text-align:center; margin-top: 16px;">
+      <a href="/{{ 'admin' if role=='admin' else '' }}">← На главную</a>
+    </div>
+    {% if role=='admin' %}
+    <div style="text-align:center; margin-top: 8px;">
+      <a href="/login">Вход пользователя</a>
+    </div>
+    {% else %}
+    <div style="text-align:center; margin-top: 8px;">
+      <a href="/admin/login">Вход администратора</a>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function(){
+  const form = document.getElementById('login-form');
+  const submitBtn = document.getElementById('login-submit');
+  const toggleBtn = document.querySelector('.toggle-password');
+  const passwordInput = form.querySelector('input[name="password"]');
+  const usernameInput = form.querySelector('input[name="username"]');
+
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      const isPwd = passwordInput.type === 'password';
+      passwordInput.type = isPwd ? 'text' : 'password';
+      toggleBtn.textContent = isPwd ? '🙈' : '👁️';
+    });
+  }
+
+  function showInlineError(msg){
+    let box = document.querySelector('.message.error');
+    if (!box) {
+      box = document.createElement('div');
+      box.className = 'message error';
+      form.parentElement.insertBefore(box, form);
+    }
+    box.textContent = msg;
+  }
+
+  form.addEventListener('submit', (e) => {
+    // native constraints first
+    if (!form.checkValidity()) {
+      e.preventDefault();
+      const u = usernameInput.value.trim();
+      const p = passwordInput.value.trim();
+      if (u.length < 3) return showInlineError('Логин должен быть не короче 3 символов');
+      if (p.length < 6) return showInlineError('Пароль должен быть не короче 6 символов');
+      return showInlineError('Проверьте правильность заполнения полей');
+    }
+    // prevent double submit
+    if (submitBtn.dataset.loading === '1') {
+      e.preventDefault();
+      return;
+    }
+    submitBtn.dataset.loading = '1';
+    submitBtn.disabled = true;
+    const original = submitBtn.textContent;
+    submitBtn.textContent = '⏳ Входим...';
+    // re-enable after navigation fallback (e.g., server-side error without redirect)
+    setTimeout(() => {
+      submitBtn.disabled = false;
+      submitBtn.dataset.loading = '0';
+      submitBtn.textContent = original;
+    }, 6000);
+  });
+})();
+</script>
+{% endblock %}
+
+

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Вход для военнослужащих{% endblock %}
+
+{% block content %}
+<section class="admin-section" style="padding: 60px 0; min-height: 60vh;">
+    <div class="admin-container" style="max-width: 480px; margin: 0 auto;">
+        <h1 style="text-align:center; margin-bottom: 24px;">🔐 Вход</h1>
+        {% if error %}
+        <div class="message error" style="margin-bottom: 16px;">{{ error }}</div>
+        {% endif %}
+        <form method="POST" style="background: #fff; padding: 24px; border-radius: 12px; box-shadow: 0 6px 24px rgba(0,0,0,0.08);">
+            <div class="form-group">
+                <label>Логин</label>
+                <input type="text" name="username" required />
+            </div>
+            <div class="form-group">
+                <label>Пароль</label>
+                <input type="password" name="password" required />
+            </div>
+            <button type="submit" class="submit-button">Войти</button>
+        </form>
+    </div>
+    <div style="text-align:center; margin-top: 16px;">
+        <a href="/">← На главную</a>
+    </div>
+    <div style="text-align:center; margin-top: 8px;">
+        <a href="/admin">Вход администратора</a>
+    </div>
+    </section>
+{% endblock %}
+
+

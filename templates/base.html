@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Министерство обороны Российской Федерации{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-top">
+                <div class="logo">
+                    <img src="{{ url_for('static', filename='logo.png') }}" alt="Эмблема Минобороны">
+                    <div class="logo-text">
+                        <h1>МИНОБОРОНЫ РОССИИ</h1>
+                        <p>Официальный сайт</p>
+                    </div>
+                </div>
+                
+            </div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="{{ url_for('index') }}" {% if request.endpoint == 'index' %}class="active"{% endif %}>ГЛАВНАЯ</a></li>
+                    <li><a href="#news">НОВОСТИ</a></li>
+                    <li><a href="#structure">О МИНИСТЕРСТВЕ</a></li>
+                    <li><a href="#structure">СИЛЫ И СРЕДСТВА</a></li>
+                    <li><a href="{{ url_for('recruitment') }}" {% if request.endpoint == 'recruitment' %}class="active"{% endif %}>ВОЕННАЯ СЛУЖБА</a></li>
+                    <li><a href="#contacts">КОНТАКТЫ</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>МИНОБОРОНЫ РОССИИ</h4>
+                    <p>Министерство обороны Российской Федерации</p>
+                    <p>за КПП</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Разделы</h4>
+                    <ul>
+                        <li><a href="/news">Новости</a></li>
+                        <li><a href="/structure">О министерстве</a></li>
+                        <li><a href="{{ url_for('recruitment') }}">Военная служба</a></li>
+                        <li><a href="/contacts">Контакты</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Контакты</h4>
+                    <p>Пинг генерала: @banzaa.i</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Министерство обороны Российской Федерации. Все права защищены.оригинальный сайт: <a href="https://mil.ru">https://mil.ru</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
+
