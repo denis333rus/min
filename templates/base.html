@@ -5,7 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Министерство обороны Российской Федерации{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    {% block extra_css %}{% endblock %}
+    {% block extra_css %}
+<style>
+.login-btn.upgrade, .logout-btn.upgrade {
+  display:inline-block; min-width:90px; background:linear-gradient(90deg,#ffd700,#ffd700) no-repeat;
+  color:#fff; font-weight:500; letter-spacing:0.03em; border:none; border-radius:28px; padding:9px 25px; font-size:1.08rem;
+  margin-left: 20px; transition:background 0.18s,box-shadow 0.21s, color 0.13s; box-shadow: 0 1px 8px #295dd620; text-align:center;
+  text-decoration:none; position:relative; z-index:2;
+}
+.login-btn.upgrade:hover,.logout-btn.upgrade:hover {
+  background:linear-gradient(90deg,#1a39a4,#295dd6); color:#fff; box-shadow: 0 4px 12px #618ffb33; text-decoration:none;
+}
+@media (max-width:600px){ .header-login .upgrade { margin-left:8px; padding:8px 12px; font-size:1em;} }
+</style>
+{% endblock %}
 </head>
 <body>
     <header class="header">
@@ -17,6 +30,13 @@
                         <h1>МИНОБОРОНЫ РОССИИ</h1>
                         <p>Официальный сайт</p>
                     </div>
+                </div>
+                <div class="header-login">
+                    {% if not session.get('admin_logged_in') and not session.get('user_logged_in') %}
+                        <a href="{{ url_for('user_login') }}" class="login-btn upgrade">Войти</a>
+                    {% else %}
+                        <a href="{{ url_for('user_logout') }}" class="logout-btn upgrade">Выйти</a>
+                    {% endif %}
                 </div>
                 
             </div>
@@ -30,6 +50,7 @@
                     <li><a href="#contacts">КОНТАКТЫ</a></li>
                 </ul>
             </nav>
+            
         </div>
     </header>
 

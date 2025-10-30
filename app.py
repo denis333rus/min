@@ -20,8 +20,8 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 # Admin credentials (change in production!)
-ADMIN_USERNAME = 'admin'
-ADMIN_PASSWORD = 'admin123'
+ADMIN_USERNAME = os.getenv('ADMIN_USERNAME', 'admin')
+ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'admin123')
 
 # Authentication decorator
 def login_required(f):
@@ -655,9 +655,21 @@ def admin_create_schedule():
     db.session.commit()
     return jsonify({'success': True, 'created_for': len(targets)})
 
-# Initialize database
+# Initialize database automatically if empty (table or DB does not exist)
+def auto_db_init():
+    try:
+        inspector = db.inspect(db.engine)
+        tables = inspector.get_table_names()
+        if not tables:
+            db.create_all()
+            app.logger.info('[Auto-DB-Init] Все таблицы созданы (база была пуста)')
+        else:
+            app.logger.info('[Auto-DB-Init] Таблицы уже существуют, инициализация не требуется')
+    except Exception as e:
+        app.logger.error(f'[Auto-DB-Init] Ошибка инициализации БД: {e}')
+
 with app.app_context():
-    db.create_all()
+    auto_db_init()
     # SQLite-only compatibility ALTERs (skip on Postgres)
     try:
         if db.engine.url.drivername.startswith('sqlite'):
