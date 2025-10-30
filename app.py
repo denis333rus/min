@@ -21,7 +21,7 @@ db = SQLAlchemy(app)
 
 # Admin credentials (change in production!)
 ADMIN_USERNAME = os.getenv('ADMIN_USERNAME', 'admin')
-ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'admin123')
+ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'e41J6_Xs')
 
 # Authentication decorator
 def login_required(f):
@@ -709,4 +709,5 @@ with app.app_context():
 
 if __name__ == '__main__':
     app.run(debug=os.getenv('FLASK_DEBUG', '0') == '1', host='0.0.0.0', port=int(os.getenv('PORT', '8080')))
+
 
